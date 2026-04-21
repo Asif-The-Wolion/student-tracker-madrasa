@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="theme-color" content="#1a3a5c"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<title>Asif National — Student Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&family=Noto+Serif+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<!-- 🔒 Private config loaded from separate file (excluded from GitHub) -->
+<script src="config.js"></script>
+<style>
+/* ═══════════════════════════════ VARIABLES ═══════════════════════════════ */
+:root {
+  --bg:       #f6f5f2;
+  --surface:  #ffffff;
+  --border:   #e5e1d8;
+  --border2:  #cdc8bc;
+  --accent:   #1a3a5c;
+  --accent2:  #2563a8;
+  --gold:     #c47b1e;
+  --red:      #b91c1c;
+  --green:    #166534;
+  --green-bg: #f0fdf4;
+  --red-bg:   #fef2f2;
+  --yellow-bg:#fffbeb;
+  --blue-bg:  #eff6ff;
+  --text:     #1c1917;
+  --muted:    #6b6760;
+  --sub:      #9c9790;
+  --light:    #eeeae3;
+  --font:     'DM Sans', sans-serif;
+  --serif:    'DM Serif Display', serif;
+  --bangla:   'Noto Serif Bengali', serif;
+  --radius:   10px;
+  --shadow:   0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+  --nav-h:    56px;   /* bottom nav height on mobile */
+}
+
+/* ═══════════════════════════════ RESET ═══════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 15px; line-height: 1.5; min-height: 100dvh; }
+img { max-width: 100%; }
+button { cursor: pointer; font-family: var(--font); }
+
+/* ═══════════════════════════════ SCREENS ════════════════════════════════ */
+.screen { display: none; }
+.screen.visible { display: flex; }
+#login-screen  { min-height: 100dvh; align-items: center; justify-content: center;
+  background: linear-gradient(160deg, #0a1e35 0%, #1a3a5c 55%, #0d2340 100%);
+  position: relative; overflow: hidden; padding: 20px; }
+#login-screen::before {
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background: radial-gradient(ellipse 80% 60% at 20% 10%, rgba(46,109,164,.28) 0%, transparent 70%),
+              radial-gradient(ellipse 60% 50% at 80% 85%, rgba(196,123,30,.16) 0%, transparent 60%); }
+#login-screen::after {
+  content:''; position:absolute; inset:0; pointer-events:none; opacity:.025;
+  background: repeating-linear-gradient(0deg,transparent,transparent 36px,#fff 36px,#fff 37px),
+              repeating-linear-gradient(90deg,transparent,transparent 36px,#fff 36px,#fff 37px); }
+#denied-screen { min-height:100dvh; align-items:center; justify-content:center; background:var(--bg); padding:24px; }
+#app-screen    { min-height:100dvh; flex-direction:column; }
+
+/* ═══════════════════════════════ LOGIN BOX ══════════════════════════════ */
+.login-box {
+  background: rgba(255,255,255,.05); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255,255,255,.13); border-radius: 20px;
+  padding: clamp(28px, 6vw, 52px) clamp(22px, 6vw, 48px);
+  width: 100%; max-width: 420px; position: relative; z-index: 1;
+  box-shadow: 0 24px 80px rgba(0,0,0,.4);
+  animation: slideUp .45s cubic-bezier(.16,1,.3,1) both; }
+@keyframes slideUp { from { opacity:0; transform:translateY(28px); } to { opacity:1; transform:none; } }
+.login-brand { text-align:center; margin-bottom:28px; }
+.login-brand .en { font-family:var(--serif); font-size:clamp(1.6rem,5vw,2rem); color:#fff; }
+.login-brand .bn { font-family:var(--bangla); font-size:.9rem; color:rgba(255,255,255,.45); display:block; margin-top:4px; }
+.login-brand .bar { width:36px; height:2px; background:var(--gold); border-radius:2px; margin:12px auto 0; }
+.login-tag { text-align:center; font-size:.72rem; color:rgba(255,255,255,.35); letter-spacing:.08em;
+  text-transform:uppercase; margin-bottom:28px; }
+.field-label { display:block; font-size:.74rem; font-weight:600; letter-spacing:.06em;
+  text-transform:uppercase; color:rgba(255,255,255,.45); margin-bottom:7px; }
+.login-input {
+  width:100%; padding:13px 15px; border-radius:10px;
+  background:rgba(255,255,255,.09); border:1px solid rgba(255,255,255,.18);
+  color:#fff; font-family:var(--font); font-size:.95rem; outline:none;
+  transition:border-color .2s, background .2s; }
+.login-input::placeholder { color:rgba(255,255,255,.3); }
+.login-input:focus { background:rgba(255,255,255,.14); border-color:rgba(255,255,255,.4); }
+.login-btn {
+  width:100%; margin-top:14px; padding:14px; border:none; border-radius:10px;
+  background:linear-gradient(135deg,#1a3a5c,#2563a8); color:#fff;
+  font-size:.95rem; font-weight:600; letter-spacing:.02em;
+  transition:opacity .2s, transform .15s; }
+.login-btn:active { opacity:.85; transform:scale(.98); }
+.login-err { color:#ff8a80; font-size:.8rem; text-align:center; margin-top:12px; min-height:18px; }
+.login-note { text-align:center; color:rgba(255,255,255,.25); font-size:.72rem;
+  margin-top:20px; line-height:1.65; }
+.login-note .bn { font-family:var(--bangla); }
+
+/* ═══════════════════════════════ DENIED ════════════════════════════════ */
+.denied-box { text-align:center; max-width:360px; }
+.denied-icon { font-size:3rem; margin-bottom:16px; }
+.denied-title { font-family:var(--serif); font-size:1.7rem; color:var(--accent); margin-bottom:10px; }
+.denied-text { color:var(--muted); font-size:.88rem; line-height:1.7; margin-bottom:24px; }
+.denied-text .bn { font-family:var(--bangla); }
+
+/* ═══════════════════════════════ APP HEADER ════════════════════════════ */
+header {
+  background:var(--accent); color:#fff; height:52px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 16px; position:sticky; top:0; z-index:300;
+  box-shadow:0 2px 10px rgba(15,37,64,.35); }
+.hdr-brand { display:flex; flex-direction:column; }
+.hdr-en { font-family:var(--serif); font-size:1.05rem; color:#fff; line-height:1.1; }
+.hdr-bn { font-family:var(--bangla); font-size:.66rem; color:rgba(255,255,255,.45); }
+.hdr-right { display:flex; align-items:center; gap:8px; }
+.role-chip {
+  font-size:.65rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase;
+  padding:3px 9px; border-radius:20px;
+  background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.8); }
+.role-chip.admin { background:rgba(196,123,30,.28); border-color:rgba(196,123,30,.45); color:#f0b55a; }
+.user-av {
+  width:30px; height:30px; border-radius:50%; background:var(--gold);
+  display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:.74rem; color:#fff; flex-shrink:0; }
+.btn-out {
+  background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2);
+  color:rgba(255,255,255,.75); padding:5px 11px; border-radius:7px;
+  font-size:.72rem; font-weight:600; transition:all .2s; }
+.btn-out:active { background:rgba(255,255,255,.2); }
+
+/* ═══════════════════════════════ SYNC BAR ══════════════════════════════ */
+.sync-bar {
+  display:flex; align-items:center; gap:8px; padding:9px 14px;
+  background:#eff6ff; border-bottom:1px solid #bfdbfe;
+  font-size:.76rem; color:var(--accent2); flex-shrink:0; }
+.sdot { width:7px; height:7px; border-radius:50%; background:var(--green); flex-shrink:0; }
+.sdot.spin { background:var(--gold); animation:pulse .9s infinite; }
+.sdot.err  { background:var(--red); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+.sync-bar button { margin-left:auto; }
+
+/* ═══════════════════════════════ BOTTOM NAV (mobile) ═══════════════════ */
+.bottom-nav {
+  position:fixed; bottom:0; left:0; right:0; z-index:300;
+  background:var(--surface); border-top:1px solid var(--border);
+  display:flex; height:var(--nav-h);
+  box-shadow:0 -2px 12px rgba(0,0,0,.07); }
+.bnav-btn {
+  flex:1; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; gap:3px; background:none; border:none;
+  color:var(--sub); font-size:.6rem; font-weight:600; letter-spacing:.04em;
+  text-transform:uppercase; padding:6px 4px; transition:color .18s; }
+.bnav-btn .bn { font-family:var(--bangla); text-transform:none; letter-spacing:0; font-size:.64rem; }
+.bnav-btn .ico { font-size:1.25rem; line-height:1; }
+.bnav-btn.active { color:var(--accent2); }
+.bnav-btn.active .ico { transform:scale(1.1); }
+
+/* ═══════════════════════════════ DESKTOP TABS ══════════════════════════ */
+.desk-tabs {
+  background:var(--surface); border-bottom:1px solid var(--border);
+  display:none; padding:0 20px; gap:2px; flex-shrink:0; }
+.dtab {
+  background:none; border:none; font-family:var(--font); font-size:.83rem;
+  font-weight:500; color:var(--muted); padding:13px 18px;
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  position:relative; transition:color .18s; white-space:nowrap; }
+.dtab .bn { font-family:var(--bangla); font-size:.7rem; opacity:.7; }
+.dtab.active { color:var(--accent2); }
+.dtab.active::after { content:''; position:absolute; bottom:0; left:10px; right:10px;
+  height:2px; background:var(--accent2); border-radius:2px 2px 0 0; }
+.dtab:hover:not(.active) { color:var(--text); }
+
+/* ═══════════════════════════════ SCROLL AREA ═══════════════════════════ */
+.scroll-area {
+  flex:1; overflow-y:auto; padding-bottom:calc(var(--nav-h) + 12px); }
+.panel { display:none; padding:16px; max-width:960px; margin:0 auto; }
+.panel.active { display:block; }
+
+/* ═══════════════════════════════ PAGE TITLES ═══════════════════════════ */
+.page-title { font-family:var(--serif); font-size:1.45rem; color:var(--accent); }
+.page-sub   { font-family:var(--bangla); font-size:.83rem; color:var(--muted); margin-bottom:18px; margin-top:2px; }
+
+/* ═══════════════════════════════ CARDS ═════════════════════════════════ */
+.card {
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  padding:16px; margin-bottom:14px; box-shadow:var(--shadow); }
+.card-head {
+  display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;
+  margin-bottom:14px; padding-bottom:11px; border-bottom:1px solid var(--border); }
+.card-title { font-size:.72rem; font-weight:700; text-transform:uppercase;
+  letter-spacing:.1em; color:var(--muted); display:flex; align-items:center; gap:6px; }
+.card-title .bn { font-family:var(--bangla); text-transform:none; letter-spacing:0; font-weight:400; }
+
+/* ═══════════════════════════════ FORMS ═════════════════════════════════ */
+.field { margin-bottom:12px; }
+.field:last-child { margin-bottom:0; }
+.label { display:block; font-size:.72rem; font-weight:700; letter-spacing:.05em;
+  text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+.label .bn { font-family:var(--bangla); text-transform:none; letter-spacing:0; font-weight:400; }
+input[type=text], input[type=number], input[type=email], select, textarea {
+  width:100%; background:var(--bg); border:1px solid var(--border2);
+  border-radius:8px; color:var(--text); font-family:var(--font); font-size:.9rem;
+  padding:10px 12px; outline:none; transition:border-color .18s, box-shadow .18s;
+  -webkit-appearance:none; appearance:none; }
+input:focus, select:focus, textarea:focus {
+  border-color:var(--accent2); background:#fff;
+  box-shadow:0 0 0 3px rgba(37,99,168,.1); }
+select { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b6760' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 10px center; padding-right:32px; }
+.fg2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.fg3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+@media(max-width:480px){ .fg2,.fg3{ grid-template-columns:1fr 1fr; } }
+@media(max-width:360px){ .fg2,.fg3{ grid-template-columns:1fr; } }
+
+/* ═══════════════════════════════ BUTTONS ═══════════════════════════════ */
+.btn { border:none; border-radius:8px; font-family:var(--font); font-weight:600;
+  font-size:.85rem; padding:11px 18px; display:inline-flex; align-items:center;
+  gap:7px; transition:all .17s; letter-spacing:.01em; }
+.btn:active { transform:scale(.97); }
+.btn-primary { background:var(--accent); color:#fff; }
+.btn-primary:active { background:var(--accent2); }
+.btn-gold    { background:var(--gold); color:#fff; }
+.btn-ghost   { background:transparent; border:1px solid var(--border2); color:var(--muted); }
+.btn-ghost:active { border-color:var(--accent2); color:var(--accent2); }
+.btn-danger  { background:var(--red-bg); border:1px solid #fecaca; color:var(--red); font-size:.78rem; padding:6px 12px; }
+.btn-danger:active { background:var(--red); color:#fff; }
+.btn-sm { padding:7px 13px; font-size:.78rem; }
+.btn-full { width:100%; justify-content:center; }
+
+/* ═══════════════════════════════ STUDENT CARDS ═════════════════════════ */
+.s-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px; }
+@media(max-width:480px){ .s-grid { grid-template-columns:1fr; } }
+.s-card {
+  background:var(--bg); border:1px solid var(--border); border-radius:var(--radius);
+  padding:12px 14px; display:flex; align-items:center; gap:12px; transition:border-color .18s; }
+.s-card:active { border-color:var(--accent2); }
+.s-av {
+  width:38px; height:38px; border-radius:9px; flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:.82rem; color:#fff; }
+.s-name { font-weight:600; font-size:.88rem; }
+.s-meta { font-size:.73rem; color:var(--muted); margin-top:2px; }
+
+/* ═══════════════════════════════ BADGES ═══════════════════════════════ */
+.cbadge { display:inline-block; font-size:.65rem; font-weight:700; letter-spacing:.05em;
+  padding:2px 7px; border-radius:4px; text-transform:uppercase; }
+.cb2 { background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; }
+.cb3 { background:#f5f3ff; color:#6d28d9; border:1px solid #ddd6fe; }
+.cb4 { background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0; }
+.cb5 { background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; }
+
+/* ═══════════════════════════════ SLIDERS ═══════════════════════════════ */
+.slider-block { display:flex; flex-direction:column; gap:14px; }
+.sl-row { display:flex; align-items:center; gap:10px; }
+.sl-label { font-size:.78rem; color:var(--muted); font-weight:500; flex:0 0 140px; }
+@media(max-width:400px){ .sl-label{ flex:0 0 110px; font-size:.72rem; } }
+input[type=range] {
+  -webkit-appearance:none; height:4px; border-radius:2px;
+  background:var(--border2); flex:1; padding:0; border:none; box-shadow:none; cursor:pointer; }
+input[type=range]:focus { box-shadow:none; border:none; background:var(--border2); }
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance:none; width:20px; height:20px; border-radius:50%;
+  background:var(--accent2); border:3px solid #fff;
+  box-shadow:0 1px 4px rgba(0,0,0,.2); cursor:pointer; }
+.rv {
+  width:34px; height:34px; border-radius:8px; display:flex; align-items:center;
+  justify-content:center; font-weight:700; font-size:.88rem;
+  background:var(--bg); border:1px solid var(--border2); flex-shrink:0; }
+
+/* ═══════════════════════════════ STAT CARDS ════════════════════════════ */
+.stat-row { display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:10px; margin-bottom:14px; }
+.stat-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  padding:14px 12px; box-shadow:var(--shadow); }
+.stat-v { font-family:var(--serif); font-size:1.9rem; color:var(--accent); line-height:1; }
+.stat-l { font-size:.68rem; color:var(--muted); margin-top:4px; font-weight:600;
+  letter-spacing:.04em; text-transform:uppercase; }
+.stat-l .bn { font-family:var(--bangla); text-transform:none; letter-spacing:0; }
+
+/* ═══════════════════════════════ ALERTS ═══════════════════════════════ */
+.alert { border-radius:8px; padding:10px 13px; margin-bottom:8px;
+  font-size:.82rem; display:flex; align-items:flex-start; gap:9px; border-left:3px solid; }
+.alert-r { background:var(--red-bg);    border-color:#ef4444; color:#991b1b; }
+.alert-y { background:var(--yellow-bg); border-color:#f59e0b; color:#92400e; }
+.alert-b { background:var(--blue-bg);   border-color:#3b82f6; color:#1d4ed8; }
+.alert-g { background:var(--green-bg);  border-color:#22c55e; color:#166534; }
+.alert-icon { flex-shrink:0; margin-top:1px; }
+
+/* ═══════════════════════════════ TABLE ════════════════════════════════ */
+.tbl-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+table { width:100%; border-collapse:collapse; font-size:.8rem; min-width:520px; }
+th { text-align:left; font-weight:700; font-size:.68rem; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--muted); padding:9px 11px;
+  border-bottom:2px solid var(--border); background:var(--bg); white-space:nowrap; }
+td { padding:9px 11px; border-bottom:1px solid var(--border); vertical-align:middle; }
+tr:last-child td { border-bottom:none; }
+tbody tr:active td { background:var(--light); }
+
+/* Score bar */
+.sc-wrap { display:flex; align-items:center; gap:7px; }
+.sc-bar { height:5px; width:50px; border-radius:3px; background:var(--border); overflow:hidden; flex-shrink:0; }
+.sc-fill { height:100%; border-radius:3px; }
+
+/* ═══════════════════════════════ CHARTS ═══════════════════════════════ */
+.chart-h { position:relative; height:210px; }
+.charts-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+@media(max-width:640px){ .charts-2{ grid-template-columns:1fr; } }
+
+/* ═══════════════════════════════ ACCESS LIST ═══════════════════════════ */
+.email-row {
+  display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;
+  padding:11px 13px; background:var(--bg); border:1px solid var(--border);
+  border-radius:8px; margin-bottom:8px; font-size:.83rem; }
+.email-role { font-size:.7rem; color:var(--muted); margin-left:8px; }
+
+/* ═══════════════════════════════ TOAST ════════════════════════════════ */
+.toast {
+  position:fixed; bottom:calc(var(--nav-h) + 14px); left:50%;
+  transform:translateX(-50%) translateY(10px); pointer-events:none;
+  background:var(--accent); color:#fff; padding:10px 22px; border-radius:10px;
+  font-size:.83rem; font-weight:500; opacity:0; z-index:9999;
+  transition:all .28s; box-shadow:0 4px 20px rgba(0,0,0,.2); white-space:nowrap;
+  max-width:calc(100vw - 32px); text-align:center; }
+.toast.on { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* ═══════════════════════════════ RESPONSIVE OVERRIDES ═════════════════ */
+@media(min-width:700px){
+  .bottom-nav { display:none; }
+  .desk-tabs { display:flex; }
+  .scroll-area { padding-bottom:16px; }
+  .panel { padding:24px 24px; }
+  .toast { bottom:22px; }
+}
+@media(min-width:700px) and (max-width:900px){
+  .fg3 { grid-template-columns:1fr 1fr; }
+}
+
+/* ═══════════════════════════════ PRINT ════════════════════════════════ */
+@media print {
+  header,.bottom-nav,.desk-tabs,.sync-bar,.no-print { display:none!important; }
+  .panel { display:block!important; padding:0; }
+  .card { box-shadow:none; border:1px solid #ccc; }
+  body { background:#fff; }
+  .scroll-area { overflow:visible; padding:0; }
+}
+</style>
+</head>
+<body>
+
+<!-- ╔══════════════════════════════════════════════════════╗
+     ║  LOGIN SCREEN                                        ║
+     ╚══════════════════════════════════════════════════════╝ -->
+<div id="login-screen" class="screen visible">
+  <div class="login-box">
+    <div class="login-brand">
+      <div class="en">Asif National</div>
+      <span class="bn">ছাত্র অগ্রগতি ট্র্যাকার</span>
+      <div class="bar"></div>
+    </div>
+    <p class="login-tag">Student Progress Management</p>
+    <div class="field">
+      <label class="field-label">Gmail Address / ইমেইল</label>
+      <input class="login-input" type="email" id="li-email" placeholder="yourname@gmail.com"
+        autocomplete="email" autocapitalize="none"
+        onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <button class="login-btn" onclick="doLogin()">Sign In →</button>
+    <div class="login-err" id="li-err"></div>
+    <p class="login-note">Access restricted to approved accounts only.<br/>
+      <span class="bn">শুধুমাত্র অনুমোদিত Gmail দিয়ে প্রবেশ করুন।</span></p>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════════════════╗
+     ║  ACCESS DENIED SCREEN                                ║
+     ╚══════════════════════════════════════════════════════╝ -->
+<div id="denied-screen" class="screen">
+  <div class="denied-box">
+    <div class="denied-icon">🔒</div>
+    <div class="denied-title">Access Denied</div>
+    <p class="denied-text">Your Gmail is not approved for this system. Contact the administrator.<br/><br/>
+      <span class="bn">আপনার অ্যাকাউন্ট অনুমোদিত নয়। অনুগ্রহ করে প্রশাসকের সাথে যোগাযোগ করুন।</span></p>
+    <button class="btn btn-ghost" onclick="showScreen('login')">← Try Another Account</button>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════════════════╗
+     ║  MAIN APP                                            ║
+     ╚══════════════════════════════════════════════════════╝ -->
+<div id="app-screen" class="screen">
+
+  <!-- Header -->
+  <header>
+    <div class="hdr-brand">
+      <span class="hdr-en">Asif National</span>
+      <span class="hdr-bn">ছাত্র ট্র্যাকার</span>
+    </div>
+    <div class="hdr-right">
+      <span class="role-chip" id="role-chip">Viewer</span>
+      <div class="user-av" id="user-av">?</div>
+      <button class="btn-out" onclick="logout()">Sign Out</button>
+    </div>
+  </header>
+
+  <!-- Sync bar -->
+  <div class="sync-bar">
+    <div class="sdot" id="sdot"></div>
+    <span id="sync-txt">Connecting to Google Sheets…</span>
+    <button class="btn btn-ghost btn-sm no-print" onclick="loadFromSheets()">↻</button>
+  </div>
+
+  <!-- Desktop tabs -->
+  <div class="desk-tabs" id="desk-tabs">
+    <button class="dtab active" onclick="switchTab('students',this)">Students <span class="bn">ছাত্র</span></button>
+    <button class="dtab" onclick="switchTab('log',this)">Log Result <span class="bn">ফলাফল</span></button>
+    <button class="dtab" onclick="switchTab('weekly',this)">Weekly <span class="bn">সাপ্তাহিক</span></button>
+    <button class="dtab" onclick="switchTab('monthly',this)">Monthly <span class="bn">মাসিক</span></button>
+    <button class="dtab" id="dt-access" style="display:none" onclick="switchTab('access',this)">Access <span class="bn">অ্যাক্সেস</span></button>
+  </div>
+
+  <!-- Scroll area -->
+  <div class="scroll-area">
+
+    <!-- ── STUDENTS ── -->
+    <div id="tab-students" class="panel active">
+      <div class="page-title">Student Register</div>
+      <div class="page-sub">নিবন্ধিত ছাত্রছাত্রী</div>
+
+      <div class="card admin-only" id="add-s-card">
+        <div class="card-head">
+          <div class="card-title">Add New Student <span class="bn">/ নতুন ছাত্র</span></div>
+        </div>
+        <div class="fg2">
+          <div class="field"><label class="label">Full Name <span class="bn">পূর্ণ নাম</span></label>
+            <input type="text" id="s-name" placeholder="e.g. Rafia Akter"/></div>
+          <div class="field"><label class="label">Class <span class="bn">শ্রেণী</span></label>
+            <select id="s-class">
+              <option value="2">Class 2</option><option value="3">Class 3</option>
+              <option value="4">Class 4</option><option value="5">Class 5</option>
+            </select></div>
+          <div class="field"><label class="label">Roll / ID</label>
+            <input type="text" id="s-roll" placeholder="e.g. 01"/></div>
+          <div class="field"><label class="label">Guardian <span class="bn">অভিভাবক</span></label>
+            <input type="text" id="s-guardian" placeholder="Optional"/></div>
+        </div>
+        <button class="btn btn-primary btn-full" style="margin-top:4px" onclick="addStudent()">＋ Register Student</button>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">All Students <span class="bn">সকল ছাত্র</span></div>
+          <select id="filter-cls" onchange="renderStudents()" style="width:auto;font-size:.78rem;padding:6px 28px 6px 10px">
+            <option value="all">All Classes</option>
+            <option value="2">Class 2</option><option value="3">Class 3</option>
+            <option value="4">Class 4</option><option value="5">Class 5</option>
+          </select>
+        </div>
+        <div id="s-list" class="s-grid"></div>
+      </div>
+    </div>
+
+    <!-- ── LOG RESULT ── -->
+    <div id="tab-log" class="panel">
+      <div class="page-title">Log Result</div>
+      <div class="page-sub">ফলাফল ও আচরণ রেকর্ড করুন</div>
+
+      <div class="card">
+        <div class="card-head"><div class="card-title">Select Student <span class="bn">/ ছাত্র বেছে নিন</span></div></div>
+        <div class="fg2">
+          <div class="field"><label class="label">Class</label>
+            <select id="r-cls" onchange="fillStudentSel()">
+              <option value="2">Class 2</option><option value="3">Class 3</option>
+              <option value="4">Class 4</option><option value="5">Class 5</option>
+            </select></div>
+          <div class="field"><label class="label">Student</label><select id="r-stu"></select></div>
+          <div class="field"><label class="label">Subject <span class="bn">বিষয়</span></label>
+            <select id="r-sub">
+              <option value="English">English / ইংরেজি</option>
+              <option value="Math">Math / গণিত</option>
+              <option value="General Knowledge">GK / সাধারণ জ্ঞান</option>
+            </select></div>
+          <div class="field"><label class="label">Type <span class="bn">ধরন</span></label>
+            <select id="r-type">
+              <option value="Homework">Homework / বাড়ির কাজ</option>
+              <option value="Quiz">Quiz / কুইজ</option>
+              <option value="Exam">Exam / পরীক্ষা</option>
+              <option value="Class Test">Class Test</option>
+            </select></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><div class="card-title">Marks <span class="bn">/ নম্বর</span></div></div>
+        <div class="fg3">
+          <div class="field"><label class="label">Obtained <span class="bn">প্রাপ্ত</span></label>
+            <input type="number" id="r-marks" min="0" inputmode="numeric" placeholder="38"/></div>
+          <div class="field"><label class="label">Out of <span class="bn">মোট</span></label>
+            <input type="number" id="r-total" min="1" inputmode="numeric" placeholder="50"/></div>
+          <div class="field"><label class="label">Homework? <span class="bn">বাড়ির কাজ</span></label>
+            <select id="r-hw">
+              <option value="10">✓ Done</option>
+              <option value="5">~ Partial</option>
+              <option value="0">✗ Not done</option>
+            </select></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><div class="card-title">Behaviour & Skills <span class="bn">/ আচরণ</span></div></div>
+        <div class="slider-block">
+          <div class="sl-row">
+            <span class="sl-label">✍ Handwriting</span>
+            <input type="range" id="r-hw2" min="1" max="10" value="5" oninput="setRV('r-hw2','rv-hw2')"/>
+            <div class="rv" id="rv-hw2">5</div>
+          </div>
+          <div class="sl-row">
+            <span class="sl-label">🧠 Attentiveness</span>
+            <input type="range" id="r-att" min="1" max="10" value="5" oninput="setRV('r-att','rv-att')"/>
+            <div class="rv" id="rv-att">5</div>
+          </div>
+          <div class="sl-row">
+            <span class="sl-label">⭐ Behaviour</span>
+            <input type="range" id="r-beh" min="1" max="10" value="5" oninput="setRV('r-beh','rv-beh')"/>
+            <div class="rv" id="rv-beh">5</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><div class="card-title">Notes <span class="bn">/ মন্তব্য</span></div></div>
+        <div class="field"><label class="label">Additional Notes (optional)</label>
+          <textarea id="r-notes" rows="2" placeholder="Any observation..."></textarea></div>
+        <button class="btn btn-primary btn-full" style="margin-top:4px" onclick="logResult()">💾 Save Entry</button>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><div class="card-title">Recent Entries <span class="bn">/ সাম্প্রতিক</span></div></div>
+        <div id="recent-box">
+          <div class="empty-state">📋 No entries yet.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── WEEKLY ── -->
+    <div id="tab-weekly" class="panel">
+      <div class="page-title">Weekly Report</div>
+      <div class="page-sub">এই সপ্তাহের সারসংক্ষেপ — Last 7 days</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:flex-end">
+        <div style="display:flex;flex-direction:column;gap:5px;flex:1;min-width:130px">
+          <label class="label">Class</label>
+          <select id="w-cls" onchange="fillRptSel('w');renderReport('w')">
+            <option value="all">All</option><option value="2">Class 2</option>
+            <option value="3">Class 3</option><option value="4">Class 4</option><option value="5">Class 5</option>
+          </select></div>
+        <div style="display:flex;flex-direction:column;gap:5px;flex:1;min-width:130px">
+          <label class="label">Student</label>
+          <select id="w-stu" onchange="renderReport('w')"><option value="all">All Students</option></select></div>
+        <button class="btn btn-ghost btn-sm no-print" onclick="window.print()">🖨 Print</button>
+      </div>
+      <div id="weekly-out"></div>
+    </div>
+
+    <!-- ── MONTHLY ── -->
+    <div id="tab-monthly" class="panel">
+      <div class="page-title">Monthly Report</div>
+      <div class="page-sub">গত ৩০ দিনের বিশ্লেষণ — Last 30 days</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:flex-end">
+        <div style="display:flex;flex-direction:column;gap:5px;flex:1;min-width:130px">
+          <label class="label">Class</label>
+          <select id="m-cls" onchange="fillRptSel('m');renderReport('m')">
+            <option value="all">All</option><option value="2">Class 2</option>
+            <option value="3">Class 3</option><option value="4">Class 4</option><option value="5">Class 5</option>
+          </select></div>
+        <div style="display:flex;flex-direction:column;gap:5px;flex:1;min-width:130px">
+          <label class="label">Student</label>
+          <select id="m-stu" onchange="renderReport('m')"><option value="all">All Students</option></select></div>
+        <button class="btn btn-ghost btn-sm no-print" onclick="window.print()">🖨 Print</button>
+      </div>
+      <div id="monthly-out"></div>
+    </div>
+
+    <!-- ── ACCESS (admin only) ── -->
+    <div id="tab-access" class="panel">
+      <div class="page-title">Access Management</div>
+      <div class="page-sub">অ্যাক্সেস ব্যবস্থাপনা</div>
+
+      <div class="card">
+        <div class="card-head"><div class="card-title">Add Approved User <span class="bn">/ ব্যবহারকারী যোগ করুন</span></div></div>
+        <div class="fg2">
+          <div class="field"><label class="label">Gmail Address</label>
+            <input type="email" id="ne-email" placeholder="teacher@gmail.com" autocapitalize="none"/></div>
+          <div class="field"><label class="label">Role</label>
+            <select id="ne-role">
+              <option value="Teacher">Teacher / শিক্ষক</option>
+              <option value="Director">Director / পরিচালক</option>
+              <option value="Viewer">Viewer</option>
+            </select></div>
+        </div>
+        <button class="btn btn-primary btn-full" style="margin-top:4px" onclick="addEmail()">＋ Add to Approved List</button>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Approved Users <span class="bn">/ অনুমোদিত</span></div>
+          <button class="btn btn-ghost btn-sm" onclick="loadEmails()">↻ Refresh</button>
+        </div>
+        <div id="email-list"><div class="empty-state">⏳ Loading...</div></div>
+      </div>
+
+      <div class="card" style="border-color:#fecaca">
+        <div class="card-head"><div class="card-title" style="color:var(--red)">⚠ Data Management</div></div>
+        <p style="font-size:.8rem;color:var(--muted);margin-bottom:12px">Manage Google Sheets sync manually if needed.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="loadFromSheets()">↻ Sync from Sheets</button>
+          <button class="btn btn-ghost btn-sm" onclick="pushAll()">↑ Push All to Sheets</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /scroll-area -->
+
+  <!-- Bottom nav (mobile) -->
+  <nav class="bottom-nav">
+    <button class="bnav-btn active" id="bn-students" onclick="switchTab('students',this,'bn-students')">
+      <span class="ico">🎓</span><span>Students</span><span class="bn">ছাত্র</span>
+    </button>
+    <button class="bnav-btn" id="bn-log" onclick="switchTab('log',this,'bn-log')">
+      <span class="ico">📝</span><span>Log</span><span class="bn">ফলাফল</span>
+    </button>
+    <button class="bnav-btn" id="bn-weekly" onclick="switchTab('weekly',this,'bn-weekly')">
+      <span class="ico">📊</span><span>Weekly</span><span class="bn">সাপ্তাহিক</span>
+    </button>
+    <button class="bnav-btn" id="bn-monthly" onclick="switchTab('monthly',this,'bn-monthly')">
+      <span class="ico">📈</span><span>Monthly</span><span class="bn">মাসিক</span>
+    </button>
+    <button class="bnav-btn" id="bn-access" style="display:none" onclick="switchTab('access',this,'bn-access')">
+      <span class="ico">🔑</span><span>Access</span><span class="bn">অ্যাক্সেস</span>
+    </button>
+  </nav>
+
+</div><!-- /app-screen -->
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CONFIG — loaded from config.js (excluded from GitHub)
+// Falls back gracefully if config.js is missing
+// ═══════════════════════════════════════════════════════════════
+const ADMIN_EMAIL = (typeof CONFIG !== 'undefined') ? CONFIG.ADMIN_EMAIL : '';
+const ADMIN_KEY   = (typeof CONFIG !== 'undefined') ? CONFIG.ADMIN_KEY   : '';
+const SHEET_ID    = (typeof CONFIG !== 'undefined') ? CONFIG.SHEET_ID    : '';
+const SCRIPT_URL  = (typeof CONFIG !== 'undefined') ? CONFIG.APPS_SCRIPT_URL : '';
+
+// ═══ STATE ═══
+let currentUser = null, currentRole = null;
+let students    = JSON.parse(localStorage.getItem('an_students') || '[]');
+let entries     = JSON.parse(localStorage.getItem('an_entries')  || '[]');
+let approved    = [];
+let charts      = {};
+
+// ═══ SAVE LOCAL ═══
+const saveLocal = () => {
+  localStorage.setItem('an_students', JSON.stringify(students));
+  localStorage.setItem('an_entries',  JSON.stringify(entries));
+};
+
+// ═══ SCREENS ═══
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('visible'));
+  document.getElementById(name + '-screen').classList.add('visible');
+}
+
+// ═══ TOAST ═══
+function toast(msg, dur = 2800) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('on');
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('on'), dur);
+}
+
+// ═══ UTILS ═══
+const now     = () => new Date().toISOString();
+const weekAgo = () => { const d=new Date(); d.setDate(d.getDate()-7); return d; };
+const moAgo   = () => { const d=new Date(); d.setDate(d.getDate()-30); return d; };
+const pct     = (m,t) => t>0 ? Math.round((m/t)*100) : 0;
+const avg     = arr => arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length) : 0;
+const ini     = n => n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+const pctC    = p => p>=70 ? '#166534' : p>=50 ? '#c47b1e' : '#b91c1c';
+const ratC    = v => v>=7  ? '#166534' : v>=4  ? '#c47b1e' : '#b91c1c';
+const fmtDate = iso => {
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) + ' ' +
+         d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+};
+function cbadge(c) {
+  const map = {'2':'cb2','3':'cb3','4':'cb4','5':'cb5'};
+  return `<span class="cbadge ${map[c]||'cb2'}">Cls ${c}</span>`;
+}
+
+// ═══ SLIDER RATING ═══
+function setRV(sid, vid) {
+  const v = parseInt(document.getElementById(sid).value);
+  const el = document.getElementById(vid);
+  el.textContent = v;
+  el.style.color = ratC(v);
+  el.style.borderColor = ratC(v);
+}
+
+// ═══ LOGIN ═══
+async function doLogin() {
+  const email = document.getElementById('li-email').value.trim().toLowerCase();
+  const errEl = document.getElementById('li-err');
+  errEl.textContent = '';
+  if (!email || !email.includes('@')) { errEl.textContent = 'Enter a valid Gmail address.'; return; }
+  if (!email.endsWith('@gmail.com'))  { errEl.textContent = 'Only Gmail accounts are supported.'; return; }
+
+  if (email === ADMIN_EMAIL) {
+    login(email, email.split('@')[0], 'admin'); return;
+  }
+  errEl.textContent = 'Checking access…';
+  try {
+    const list = await fetchApproved();
+    const found = list.find(e => e.email.toLowerCase() === email);
+    if (found) login(email, email.split('@')[0], 'approved');
+    else showScreen('denied');
+  } catch {
+    // Fallback to local cache
+    const found = approved.find(e => e.email.toLowerCase() === email);
+    if (found) login(email, email.split('@')[0], 'approved');
+    else showScreen('denied');
+  }
+  errEl.textContent = '';
+}
+
+function login(email, name, role) {
+  currentUser = {email, name};
+  currentRole = role;
+  document.getElementById('user-av').textContent = ini(name);
+  const chip = document.getElementById('role-chip');
+  chip.textContent = role === 'admin' ? 'Admin' : 'Viewer';
+  if (role === 'admin') chip.classList.add('admin');
+  // Show admin-only elements
+  document.querySelectorAll('.admin-only').forEach(el => el.style.display = role==='admin' ? '' : 'none');
+  document.getElementById('dt-access').style.display  = role==='admin' ? '' : 'none';
+  document.getElementById('bn-access').style.display  = role==='admin' ? '' : 'none';
+  showScreen('app');
+  loadFromSheets();
+  fillStudentSel();
+  renderStudents();
+  renderRecent();
+  toast(`Welcome, ${name}! 👋`);
+}
+
+function logout() {
+  currentUser = null; currentRole = null;
+  document.getElementById('li-email').value = '';
+  showScreen('login');
+}
+
+// ═══ SHEETS API ═══
+function setSyncState(state, msg) {
+  const dot = document.getElementById('sdot');
+  const txt = document.getElementById('sync-txt');
+  dot.className = 'sdot' + (state==='sync'?' spin' : state==='err'?' err' : '');
+  txt.textContent = msg;
+}
+
+async function sheetsGET(action, params={}) {
+  if (!SCRIPT_URL || SCRIPT_URL.includes('YOUR_SCRIPT')) throw new Error('Script URL not set');
+  const url = new URL(SCRIPT_URL);
+  url.searchParams.set('action', action);
+  url.searchParams.set('adminKey', ADMIN_KEY);
+  Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, v));
+  const r = await fetch(url.toString());
+  if (!r.ok) throw new Error('Fetch failed');
+  return await r.json();
+}
+
+async function sheetsPOST(payload) {
+  if (!SCRIPT_URL || SCRIPT_URL.includes('YOUR_SCRIPT')) throw new Error('Script URL not set');
+  await fetch(SCRIPT_URL, {
+    method: 'POST', mode: 'no-cors',
+    headers: {'Content-Type':'text/plain'},
+    body: JSON.stringify({...payload, adminKey: ADMIN_KEY})
+  });
+}
+
+async function loadFromSheets() {
+  setSyncState('sync', 'Syncing from Google Sheets…');
+  try {
+    const [sd, ed] = await Promise.all([sheetsGET('getStudents'), sheetsGET('getEntries')]);
+    if (sd.students) { students = sd.students; }
+    if (ed.entries)  { entries  = ed.entries;  }
+    saveLocal();
+    setSyncState('ok', 'Synced with Google Sheets ✓');
+    renderStudents(); renderRecent();
+    toast('Synced ✓');
+  } catch {
+    setSyncState('err', 'Using local data (Sheets unavailable)');
+    renderStudents(); renderRecent();
+  }
+}
+
+async function fetchApproved() {
+  const data = await sheetsGET('getApproved');
+  if (data.approved) approved = data.approved;
+  return approved;
+}
+
+async function pushAll() {
+  toast('Pushing to Sheets…');
+  await sheetsPOST({action:'replaceAll', students, entries});
+  toast('All data pushed ✓');
+}
+
+// ═══ STUDENTS ═══
+async function addStudent() {
+  const name  = document.getElementById('s-name').value.trim();
+  const cls   = document.getElementById('s-class').value;
+  const roll  = document.getElementById('s-roll').value.trim();
+  const guard = document.getElementById('s-guardian').value.trim();
+  if (!name) { toast('⚠ Enter student name.'); return; }
+  const s = {id: Date.now().toString(), name, class: cls, roll, guardian: guard,
+    addedBy: currentUser?.email||'', addedAt: now()};
+  students.push(s); saveLocal();
+  renderStudents(); fillStudentSel();
+  document.getElementById('s-name').value = '';
+  document.getElementById('s-roll').value = '';
+  document.getElementById('s-guardian').value = '';
+  toast(`"${name}" registered ✓`);
+  sheetsPOST({action:'append', type:'student', data:s}).catch(()=>{});
+}
+
+function deleteStudent(id) {
+  if (currentRole !== 'admin') { toast('Only admin can delete.'); return; }
+  const s = students.find(x => x.id === id);
+  if (!confirm(`Delete "${s?.name}" and all their records?`)) return;
+  students = students.filter(x => x.id !== id);
+  entries  = entries.filter(x => x.studentId !== id);
+  saveLocal(); renderStudents();
+  pushAll().catch(()=>{});
+  toast('Deleted.');
+}
+
+function renderStudents() {
+  const f = document.getElementById('filter-cls')?.value || 'all';
+  const box = document.getElementById('s-list');
+  if (!box) return;
+  const list = f === 'all' ? students : students.filter(s => s.class === f);
+  if (!list.length) {
+    box.innerHTML = `<div class="empty-state" style="grid-column:1/-1;padding:36px 0;text-align:center;color:var(--sub)">🎓 No students yet.</div>`;
+    return;
+  }
+  box.innerHTML = list.map(s => `
+    <div class="s-card">
+      <div class="s-av">${ini(s.name)}</div>
+      <div style="flex:1;min-width:0">
+        <div class="s-name">${s.name}</div>
+        <div class="s-meta">${cbadge(s.class)}${s.roll?' · Roll '+s.roll:''}</div>
+        ${s.guardian?`<div class="s-meta">👤 ${s.guardian}</div>`:''}
+      </div>
+      ${currentRole==='admin'?`<button class="btn btn-danger" onclick="deleteStudent('${s.id}')">✕</button>`:''}
+    </div>`).join('');
+}
+
+// ═══ LOG RESULT ═══
+function fillStudentSel() {
+  const cls = document.getElementById('r-cls')?.value || '2';
+  const sel = document.getElementById('r-stu');
+  if (!sel) return;
+  const list = students.filter(s => s.class === cls);
+  sel.innerHTML = list.length
+    ? list.map(s => `<option value="${s.id}">${s.name}${s.roll?' ('+s.roll+')':''}</option>`).join('')
+    : '<option value="">— No students —</option>';
+}
+
+async function logResult() {
+  const sid   = document.getElementById('r-stu').value;
+  const marks = parseFloat(document.getElementById('r-marks').value);
+  const total = parseFloat(document.getElementById('r-total').value);
+  if (!sid)                         { toast('⚠ Select a student.'); return; }
+  if (isNaN(marks)||isNaN(total)||total<=0) { toast('⚠ Enter valid marks.'); return; }
+  const e = {
+    id: Date.now().toString(), studentId: sid,
+    class: document.getElementById('r-cls').value,
+    subject: document.getElementById('r-sub').value,
+    type: document.getElementById('r-type').value,
+    marks, total, pct: pct(marks, total),
+    hw:          parseInt(document.getElementById('r-hw').value),
+    handwriting: parseInt(document.getElementById('r-hw2').value),
+    attention:   parseInt(document.getElementById('r-att').value),
+    behaviour:   parseInt(document.getElementById('r-beh').value),
+    notes: document.getElementById('r-notes').value.trim(),
+    loggedBy: currentUser?.email||'', date: now()
+  };
+  entries.push(e); saveLocal(); renderRecent();
+  document.getElementById('r-marks').value = '';
+  document.getElementById('r-total').value = '';
+  document.getElementById('r-notes').value = '';
+  toast('Entry saved ✓');
+  sheetsPOST({action:'append', type:'entry', data:e}).catch(()=>{});
+}
+
+function renderRecent() {
+  const box = document.getElementById('recent-box');
+  if (!box) return;
+  const list = [...entries].reverse().slice(0, 15);
+  if (!list.length) { box.innerHTML = '<div style="padding:24px 0;text-align:center;color:var(--sub)">📋 No entries yet.</div>'; return; }
+  box.innerHTML = `<div class="tbl-wrap"><table>
+    <thead><tr><th>Student</th><th>Subject</th><th>Score</th><th>HW</th><th>Beh</th><th>Date</th></tr></thead>
+    <tbody>${list.map(e => {
+      const s = students.find(x => x.id === e.studentId);
+      const p = e.pct;
+      return `<tr>
+        <td><b>${s?s.name:'?'}</b> ${cbadge(e.class)}</td>
+        <td>${e.subject}<br/><span style="font-size:.7rem;color:var(--muted)">${e.type}</span></td>
+        <td><div class="sc-wrap">
+          <span style="font-weight:700;color:${pctC(p)}">${e.marks}/${e.total}</span>
+          <div class="sc-bar"><div class="sc-fill" style="width:${p}%;background:${pctC(p)}"></div></div>
+        </div></td>
+        <td style="font-size:1rem">${e.hw>=10?'<span style="color:var(--green)">✓</span>':e.hw>=5?'<span style="color:var(--gold)">~</span>':'<span style="color:var(--red)">✗</span>'}</td>
+        <td style="font-weight:600;color:${ratC(e.behaviour)}">${e.behaviour}</td>
+        <td style="color:var(--sub);font-size:.72rem;white-space:nowrap">${fmtDate(e.date)}</td>
+      </tr>`;
+    }).join('')}</tbody></table></div>`;
+}
+
+// ═══ REPORTS ═══
+function fillRptSel(p) {
+  const cls = document.getElementById(p+'-cls').value;
+  const sel = document.getElementById(p+'-stu');
+  const list = cls==='all' ? students : students.filter(s => s.class===cls);
+  sel.innerHTML = '<option value="all">All Students</option>' +
+    list.map(s=>`<option value="${s.id}">${s.name} (Cls ${s.class})</option>`).join('');
+}
+
+function filterE(since, cls, sid) {
+  return entries.filter(e => {
+    if (new Date(e.date) < since) return false;
+    if (cls!=='all' && e.class!==cls) return false;
+    if (sid!=='all' && e.studentId!==sid) return false;
+    return true;
+  });
+}
+
+function renderReport(p) {
+  const cls  = document.getElementById(p+'-cls').value;
+  const sid  = document.getElementById(p+'-stu').value;
+  const since = p==='w' ? weekAgo() : moAgo();
+  const fe   = filterE(since, cls, sid);
+  const out  = document.getElementById(p==='w' ? 'weekly-out' : 'monthly-out');
+  out.innerHTML = buildReport(fe);
+}
+
+function buildReport(fe) {
+  if (!fe.length) return `<div style="padding:48px 0;text-align:center;color:var(--sub)">📊 No data for this period.<br/><span style="font-family:var(--bangla)">এই সময়ের কোনো তথ্য নেই।</span></div>`;
+
+  // Aggregate per student
+  const sMap = {};
+  fe.forEach(e => {
+    if (!sMap[e.studentId]) sMap[e.studentId] = {entries:[], student: students.find(x=>x.id===e.studentId)};
+    sMap[e.studentId].entries.push(e);
+  });
+  const sids = Object.keys(sMap);
+
+  // Summary
+  const avgScore  = avg(fe.map(e=>e.pct));
+  const avgBeh    = avg(fe.map(e=>e.behaviour));
+  const hwMissed  = fe.filter(e=>e.hw===0).length;
+
+  // Weaknesses
+  const W = [];
+  sids.forEach(sid => {
+    const d = sMap[sid]; const s = d.student; if (!s) return;
+    const es = d.entries;
+    const ap = avg(es.map(x=>x.pct)), ab = avg(es.map(x=>x.behaviour));
+    const ah = avg(es.map(x=>x.handwriting)), aa = avg(es.map(x=>x.attention));
+    const hwm = es.filter(x=>x.hw===0).length;
+    const subPct = {};
+    es.forEach(e=>{ if(!subPct[e.subject]) subPct[e.subject]=[]; subPct[e.subject].push(e.pct); });
+    const weakSubs = Object.entries(subPct).filter(([,v])=>avg(v)<50).map(([k])=>k);
+    if (ap<40)    W.push({t:'r',i:'📉', m:`<b>${s.name}</b> — weak performer (avg ${ap}%). <span style="font-family:var(--bangla)">দুর্বল শিক্ষার্থী।</span>`});
+    if (hwm>=Math.ceil(es.length*.5)) W.push({t:'y',i:'📝', m:`<b>${s.name}</b> — missed homework ${hwm}/${es.length}x. <span style="font-family:var(--bangla)">বাড়ির কাজ করেনি।</span>`});
+    if (ah<4)     W.push({t:'y',i:'✍️', m:`<b>${s.name}</b> — poor handwriting (${ah}/10). <span style="font-family:var(--bangla)">হাতের লেখা দুর্বল।</span>`});
+    if (aa<4)     W.push({t:'r',i:'😴', m:`<b>${s.name}</b> — not attentive (${aa}/10). <span style="font-family:var(--bangla)">মনোযোগ নেই।</span>`});
+    if (ab<4)     W.push({t:'r',i:'⚠️', m:`<b>${s.name}</b> — poor behaviour (${ab}/10). <span style="font-family:var(--bangla)">আচরণ খারাপ।</span>`});
+    if (weakSubs.length) W.push({t:'b',i:'📚', m:`<b>${s.name}</b> — weak in <b>${weakSubs.join(', ')}</b>. <span style="font-family:var(--bangla)">এই বিষয়ে দুর্বল।</span>`});
+  });
+
+  const cid1='c'+Date.now()+'a', cid2='c'+Date.now()+'b';
+
+  // Summary table rows
+  const rows = sids.map(sid => {
+    const d=sMap[sid]; const s=d.student; if(!s) return '';
+    const es=d.entries;
+    const ap=avg(es.map(x=>x.pct)), ab=avg(es.map(x=>x.behaviour));
+    const ah=avg(es.map(x=>x.handwriting)), aa=avg(es.map(x=>x.attention));
+    const hwm=es.filter(x=>x.hw===0).length;
+    return `<tr>
+      <td><b>${s.name}</b> ${cbadge(s.class)}</td>
+      <td style="font-weight:700;color:${pctC(ap)}">${ap}%</td>
+      <td style="color:${ratC(ah)};font-weight:600">${ah}/10</td>
+      <td style="color:${ratC(aa)};font-weight:600">${aa}/10</td>
+      <td style="color:${ratC(ab)};font-weight:600">${ab}/10</td>
+      <td style="color:${hwm>0?'var(--red)':'var(--green)'};font-weight:600">${hwm>0?'⚠ '+hwm:'✓'}</td>
+      <td>${es.length}</td>
+    </tr>`;
+  }).join('');
+
+  // Render charts after DOM insert
+  setTimeout(() => {
+    Object.values(charts).forEach(c => c.destroy()); charts = {};
+    const labels = sids.map(sid => { const s=students.find(x=>x.id===sid); return s?s.name:'?'; });
+    const c1 = document.getElementById(cid1);
+    if (c1) charts.c1 = new Chart(c1, {type:'bar', data:{
+      labels,
+      datasets:[{label:'Avg Score (%)', data:sids.map(sid=>avg(sMap[sid].entries.map(e=>e.pct))),
+        backgroundColor: sids.map(sid=>pctC(avg(sMap[sid].entries.map(e=>e.pct)))+'33'),
+        borderColor: sids.map(sid=>pctC(avg(sMap[sid].entries.map(e=>e.pct)))),
+        borderWidth:2, borderRadius:6}]
+    }, options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{y:{min:0,max:100,grid:{color:'#e5e1d8'},ticks:{color:'#6b6760',font:{size:10}}},
+              x:{grid:{display:false},ticks:{color:'#6b6760',maxRotation:35,font:{size:10}}}}}});
+    const c2 = document.getElementById(cid2);
+    if (c2) charts.c2 = new Chart(c2, {type:'bar', data:{
+      labels,
+      datasets:[
+        {label:'Behaviour', data:sids.map(sid=>avg(sMap[sid].entries.map(e=>e.behaviour))), backgroundColor:'#1a3a5c33', borderColor:'#1a3a5c', borderWidth:2, borderRadius:4},
+        {label:'Handwriting',data:sids.map(sid=>avg(sMap[sid].entries.map(e=>e.handwriting))),backgroundColor:'#2563a833',borderColor:'#2563a8',borderWidth:2,borderRadius:4},
+        {label:'Attention',  data:sids.map(sid=>avg(sMap[sid].entries.map(e=>e.attention))),  backgroundColor:'#c47b1e33',borderColor:'#c47b1e',borderWidth:2,borderRadius:4},
+      ]
+    }, options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#6b6760',font:{size:10}}}},
+      scales:{y:{min:0,max:10,grid:{color:'#e5e1d8'},ticks:{color:'#6b6760',font:{size:10}}},
+              x:{grid:{display:false},ticks:{color:'#6b6760',maxRotation:35,font:{size:10}}}}}});
+  }, 80);
+
+  return `
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-v">${sids.length}</div><div class="stat-l">Students <span class="bn">ছাত্র</span></div></div>
+      <div class="stat-card"><div class="stat-v">${fe.length}</div><div class="stat-l">Entries</div></div>
+      <div class="stat-card"><div class="stat-v" style="color:${pctC(avgScore)}">${avgScore}%</div><div class="stat-l">Avg Score <span class="bn">গড়</span></div></div>
+      <div class="stat-card"><div class="stat-v" style="color:${ratC(avgBeh)}">${avgBeh}<span style="font-size:1rem">/10</span></div><div class="stat-l">Behaviour</div></div>
+      <div class="stat-card"><div class="stat-v" style="color:${hwMissed>0?'var(--red)':'var(--green)'}">${hwMissed}</div><div class="stat-l">HW Missed</div></div>
+    </div>
+
+    ${W.length
+      ? `<div class="card"><div class="card-head"><div class="card-title">⚠ Weaknesses & Alerts <span class="bn">দুর্বলতা</span></div></div>
+           ${W.map(w=>`<div class="alert alert-${w.t}"><span class="alert-icon">${w.i}</span><span>${w.m}</span></div>`).join('')}
+         </div>`
+      : `<div class="alert alert-g"><span class="alert-icon">✅</span><span>No critical weaknesses this period. All performing well.</span></div>`
+    }
+
+    <div class="charts-2">
+      <div class="card">
+        <div class="card-head"><div class="card-title">Avg Score <span class="bn">গড় নম্বর</span></div></div>
+        <div class="chart-h"><canvas id="${cid1}"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">Skills Overview <span class="bn">দক্ষতা</span></div></div>
+        <div class="chart-h"><canvas id="${cid2}"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="card-title">Summary Table <span class="bn">সারসংক্ষেপ</span></div></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Student</th><th>Avg%</th><th>HW</th><th>Attn</th><th>Beh</th><th>Missed</th><th>#</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>
+    </div>`;
+}
+
+// ═══ ACCESS MANAGEMENT ═══
+async function loadEmails() {
+  const box = document.getElementById('email-list');
+  if (!box) return;
+  box.innerHTML = '<div style="padding:16px;color:var(--muted)">⏳ Loading…</div>';
+  try { await fetchApproved(); } catch {}
+  renderEmailList();
+}
+
+function renderEmailList() {
+  const box = document.getElementById('email-list');
+  if (!box) return;
+  const all = [{email: ADMIN_EMAIL, role:'Admin (Owner)', owner:true}, ...approved];
+  if (all.length <= 1 && !approved.length) {
+    box.innerHTML = '<div style="padding:16px;color:var(--muted)">No approved users yet.</div>'; return;
+  }
+  box.innerHTML = all.map(e => `
+    <div class="email-row">
+      <div><span style="font-weight:600">${e.email}</span>
+        <span class="email-role">${e.role||'Viewer'}</span></div>
+      ${!e.owner
+        ? `<button class="btn btn-danger btn-sm" onclick="removeEmail('${e.email}')">Remove</button>`
+        : `<span style="font-size:.68rem;color:var(--sub);font-weight:700">OWNER</span>`}
+    </div>`).join('');
+}
+
+async function addEmail() {
+  const email = document.getElementById('ne-email').value.trim().toLowerCase();
+  const role  = document.getElementById('ne-role').value;
+  if (!email || !email.includes('@')) { toast('⚠ Enter valid email.'); return; }
+  if (approved.find(e => e.email === email)) { toast('Already in list.'); return; }
+  approved.push({email, role});
+  document.getElementById('ne-email').value = '';
+  renderEmailList();
+  toast(`${email} added ✓`);
+  sheetsPOST({action:'addApproved', email, role}).catch(()=>{});
+}
+
+async function removeEmail(email) {
+  if (!confirm(`Remove access for ${email}?`)) return;
+  approved = approved.filter(e => e.email !== email);
+  renderEmailList();
+  toast('Removed.');
+  sheetsPOST({action:'removeApproved', email}).catch(()=>{});
+}
+
+// ═══ TAB SWITCHING ═══
+function switchTab(name, btn, bnId) {
+  // Desktop tabs
+  document.querySelectorAll('.dtab').forEach(b => b.classList.remove('active'));
+  // Bottom nav
+  document.querySelectorAll('.bnav-btn').forEach(b => b.classList.remove('active'));
+  // Panels
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+
+  document.getElementById('tab-' + name)?.classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (bnId) document.getElementById(bnId)?.classList.add('active');
+
+  if (name==='log')     fillStudentSel();
+  if (name==='weekly')  { fillRptSel('w'); renderReport('w'); }
+  if (name==='monthly') { fillRptSel('m'); renderReport('m'); }
+  if (name==='access')  loadEmails();
+}
+
+// ═══ INIT ═══
+window.onload = () => {
+  showScreen('login');
+  setTimeout(() => document.getElementById('li-email')?.focus(), 300);
+};
+</script>
+</body>
+</html>

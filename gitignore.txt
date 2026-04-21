@@ -1,0 +1,27 @@
+# ═══════════════════════════════════════════════════════════════
+# .gitignore — Asif National Student Tracker
+# Files listed here will NEVER be uploaded to GitHub
+# ═══════════════════════════════════════════════════════════════
+
+# 🔒 PRIVATE — contains your email, Sheet ID, and admin key
+config.js
+config.*.js
+
+# Any file with "secret", "private", or "env" in the name
+*secret*
+*private*
+*.env
+.env
+.env.*
+
+# OS clutter
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor folders
+.vscode/
+.idea/
+
+# Node (if you ever add a build step)
+node_modules/
